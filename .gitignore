@@ -163,3 +163,5 @@ localtesting/
 
 # pm2 config file
 app.config.js
+
+.idea/
