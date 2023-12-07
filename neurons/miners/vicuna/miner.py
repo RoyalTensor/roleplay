@@ -67,11 +67,11 @@ class VicunaMiner(Miner):
         parser.add_argument(
             "--vicuna.model_name",
             type=str,
-            default="TheBloke/Wizard-Vicuna-7B-Uncensored-HF",
+            default="Open-Orca/Mistral-7B-OpenOrca",
             help="Name/path of model to load. Also can be a filepath to the model weights (HF)",
         )
         parser.add_argument(
-            "--vicuna.device", type=str, help="Device to load model", default="cuda"
+            "--vicuna.device", type=str, help="Device to load model", default="cpu" #change this to cuda or
         )
         parser.add_argument(
             "--vicuna.max_new_tokens",
@@ -119,7 +119,7 @@ class VicunaMiner(Miner):
         )
         self.model = AutoModelForCausalLM.from_pretrained(
             self.config.vicuna.model_name,
-            torch_dtype=torch.float16,
+            #torch_dtype=torch.float16,
             low_cpu_mem_usage=True,
         )
         bt.logging.info("Model loaded!")
@@ -152,6 +152,7 @@ class VicunaMiner(Miner):
         return processed_history
 
     def prompt(self, synapse: Prompting) -> Prompting:
+        bt.logging.info("Entering prompt function")
         """
         Given a Synapse object with message history, prompts the Vicuna model for a completion.
 
@@ -166,6 +167,7 @@ class VicunaMiner(Miner):
         input_ids = self.tokenizer.encode(prompt, return_tensors="pt").to(
             self.config.vicuna.device
         )
+        bt.logging.info("Generating an output")
         output = self.model.generate(
             input_ids,
             max_length=input_ids.shape[1] + self.config.vicuna.max_new_tokens,
