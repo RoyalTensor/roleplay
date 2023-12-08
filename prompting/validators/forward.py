@@ -39,6 +39,8 @@ from prompting.validators.tasks import (
 
 import prompting
 
+import pdb
+
 
 '''
 def get_random_uids(self, k: int, exclude: List[int] = None) -> torch.LongTensor:
@@ -153,6 +155,7 @@ async def run_step(self, task: Task, k: int, timeout: float, exclude: list = [])
     rewards: torch.FloatTensor = torch.zeros(len(responses), dtype=torch.float32).to(
         self.device
     )
+
     for weight_i, reward_fn_i in zip(self.reward_weights, self.reward_functions):
         reward_i_normalized, reward_event = reward_fn_i.apply(
             task.base_text, responses, task_name
@@ -198,6 +201,7 @@ async def run_step(self, task: Task, k: int, timeout: float, exclude: list = [])
     completion_status_codes: List[str] = [
         str(comp.dendrite.status_code) for comp in responses
     ]
+
 
     best: str = completions[rewards.argmax(dim=0)].strip()
 
@@ -263,6 +267,7 @@ async def questions_and_answers_around_summary_flow(self):
     # Create a summary task from the context.
     summary_task: Task = create_summarization_task(base_text)
 
+
     # Request a summary, given the original context.
     summarization_event = await run_step(
         self,
@@ -272,20 +277,21 @@ async def questions_and_answers_around_summary_flow(self):
     )
 
     best_summary = summarization_event["best"]
-    exclude = summarization_event["uids"]
+    # exclude = summarization_event["uids"]
     best_summary_context = "### SUMMARY CONTEXT:\n" + best_summary
 
     for k in range(self.config.neuron.num_followup_steps):
         # Get a followup question, given the summarized context.
         qg_task = create_qg_task(base_text=best_summary_context, index=k)
+
         qg_event = await run_step(
             self,
             task=qg_task,
             k=self.config.neuron.followup_sample_size,
             timeout=self.config.neuron.followup_timeout,
-            exclude=exclude,
+            # exclude=exclude,
         )
-        exclude += qg_event["uids"]
+        # exclude += qg_event["uids"]
 
         # Adds the best question to the prompt context.
         best_question = qg_event["best"]
@@ -294,15 +300,16 @@ async def questions_and_answers_around_summary_flow(self):
         )
 
         qa_task = create_qa_task(best_question_prompt, index=k)
+
         qa_event = await run_step(
             self,
             task=qa_task,
             k=self.config.neuron.answer_sample_size,
             timeout=self.config.neuron.answer_timeout,
-            exclude=exclude,
+            # exclude=exclude,
         )
 
-        exclude += qa_event["uids"]
+        # exclude += qa_event["uids"]
 
 
 async def forward(self):
