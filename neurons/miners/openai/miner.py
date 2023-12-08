@@ -46,6 +46,13 @@ class OpenAIMiner(Miner):
             related to OpenAI's model completion.
         """
         parser.add_argument(
+            "--openai.api_key",
+            type=str,
+            default=None,
+            help="OpenAI API key for authenticating requests."
+        )
+
+        parser.add_argument(
             "--openai.suffix",
             type=str,
             default=None,
@@ -118,13 +125,28 @@ class OpenAIMiner(Miner):
 
     def __init__(self, api_key: Optional[str] = None, *args, **kwargs):
         super(OpenAIMiner, self).__init__(*args, **kwargs)
+
+        # Load the configuration for the miner
+        config = self.config
+
+        # If the API key is not provided as an argument, try fetching it from the configuration
         if api_key is None:
-            raise ValueError(
-                "OpenAI API key is None: the miner requires an `OPENAI_API_KEY` defined in the environment variables or as an direct argument into the constructor."
-            )
-        if self.config.wandb.on:
-            self.wandb_run.tags = self.wandb_run.tags + ("openai_miner",)
+            api_key = config.openai.api_key  # Fetch from configuration
+            if api_key is None:
+                api_key = os.getenv("OPENAI_API_KEY")  # Fallback to environment variable
+                if api_key is None:
+                    raise ValueError(
+                        "OpenAI API key is required: the miner requires an `OPENAI_API_KEY` either passed directly to the constructor, defined in the configuration, or set in the environment variables."
+                    )
+
+        # Set the OpenAI API key
         openai.api_key = api_key
+
+        # Additional configurations for wandb
+        if config.wandb.on:
+            self.wandb_run.tags = self.wandb_run.tags + ("openai_miner",)
+
+        # Rest of the initialization code...
 
     def prompt(self, synapse: Prompting) -> Prompting:
         """
