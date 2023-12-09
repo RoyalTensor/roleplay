@@ -23,6 +23,9 @@ from typing import List
 import bittensor as bt
 from starlette.responses import StreamingResponse
 
+class Message (pydantic.BaseModel):
+    name: str = pydantic.Field(..., title="Name", description="The name field of the message.")
+    content: str = pydantic.Field(..., title="Content", description="The content of the message.")
 
 class PromptingMixin(pydantic.BaseModel):
     """
@@ -50,17 +53,35 @@ class PromptingMixin(pydantic.BaseModel):
 
         validate_assignment = True
 
-    roles: List[str] = pydantic.Field(
+    character_info: str = pydantic.Field(
         ...,
-        title="Roles",
-        description="A list of roles in the Prompting scenario. Immuatable.",
+        title="Character Info",
+        description="Information about the AI character who is responding.",
+        allow_mutation=False,
+    )
+    character_name: str = pydantic.Field(
+        ...,
+        title="Character Name",
+        description="Name of the AI responding character.",
+        allow_mutation=False,
+    )
+    user_names: List[str] = pydantic.Field(
+        ...,
+        title="User Names",
+        description="Names of the human participants.",
+        allow_mutation=False,
+    )
+    char_names: List[str] = pydantic.Field(
+        ...,
+        title="All character names",
+        description="Names of all of the AI characters.",
         allow_mutation=False,
     )
 
-    messages: List[str] = pydantic.Field(
+    messages: List[Message] = pydantic.Field(
         ...,
         title="Messages",
-        description="A list of messages in the Prompting scenario. Immutable.",
+        description="List of messages containing character name, and content.",
         allow_mutation=False,
     )
 
