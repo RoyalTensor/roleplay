@@ -42,7 +42,7 @@ class OpenRouterMiner(Miner):
             "--openrouter.api_key",
             type=str,
             default=None,
-            help="OpenAI API key for authenticating requests."
+            help="OpenRouter API key for authenticating requests."
         )
         pass
 
@@ -121,6 +121,7 @@ class OpenRouterMiner(Miner):
 
         bittensor.logging.info(f"Prompt being passed to openrouter:\n{prompt_string}")
 
+        all_names = user_names + char_names
         response = requests.post(
             url="https://openrouter.ai/api/v1/objects/generations",
             headers={
@@ -131,10 +132,11 @@ class OpenRouterMiner(Miner):
             },
             data=json.dumps({
                 "prompt": prompt_string,
-                "num_inference_steps": 32,  # Adjust as needed
-                "num_outputs": 1,  # Adjust as needed
-                "extension": "ply",  # Adjust as needed
-                "model": "open-orca/mistral-7b-openorca"  # Adjust as needed
+                "transforms": ["middle-out"],
+                "model": "open-orca/mistral-7b-openorca",  # Adjust as needed
+                "max_tokens": 500,
+                "stop": all_names,
+                "temperature": 0.8,
             })
         )
 
