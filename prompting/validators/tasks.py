@@ -31,6 +31,7 @@ from prompting.validators.criteria import (
     MatchLayoutCriteria,
     LayoutMatchTypeEnum,
 )
+from prompting.validators.characterset import Character, default_character
 
 
 @dataclass
@@ -43,6 +44,67 @@ class Task(ABC):
     @abstractmethod
     def compose_prompt(self) -> str:
         ...
+
+
+@dataclass
+class RoleplayTask(Task, ABC):
+    character: Character = field(default_factory=default_character)
+
+    @abstractmethod
+    def compose_prompt(self) -> str:
+        ...
+
+
+class MessageFromDescriptionTask(RoleplayTask):
+    def compose_prompt(self) -> str:
+        # Aggregates criteria in bullet points
+        criteria_bullet_points = [
+            f"- {criterion.compose_text()}" for criterion in self.criteria
+        ]
+        criteria_bullet_points_str = "\n".join(criteria_bullet_points)
+
+        prompt_template = textwrap.dedent(
+            """\
+        Please read the following character description delimited by the triple backticks carefully.
+        Your task is roleplay as the character described in the text and to write a message to me.
+        
+        '''{base_text}'''
+        
+        The following criteria must be respected:
+        {criteria}
+        - Do not try to create questions or answers for your summarization. 
+        """
+        )
+
+        prompt = prompt_template.format(
+            base_text=self.base_text, criteria=criteria_bullet_points_str
+        )
+        return prompt
+
+
+def create_message_from_description_task(
+    base_text: str, character: Character
+) -> MessageFromDescriptionTask:
+    criteria = [
+        MatchLengthCriteria(
+            penalty=0.25,
+            target_length=random.randint(50, 200),
+            unit=TextLengthUnitEnum.WORDS,
+        ),
+        MatchLengthCriteria(
+            penalty=0.25,
+            target_length=random.randint(4, 8),
+            unit=TextLengthUnitEnum.SENTENCES,
+        ),
+    ]
+
+    return MessageFromDescriptionTask(
+        base_text=base_text,
+        criteria=criteria,
+        task_type="message-from-description",
+        task_name="augment",
+        character=character,
+    )
 
 
 class SummaryTask(Task):

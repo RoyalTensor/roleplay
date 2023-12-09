@@ -2,8 +2,43 @@ from collections.abc import Iterator
 import random
 import bittensor as bt
 from datasets import load_dataset
+from typing import TypedDict
 
 CHUB_DATASET = "RoyalTensor/chub_popular_characters"
+
+
+class Character(TypedDict):
+    creator: str
+    description: str
+    first_mes: str
+    mes_example: str
+    name: str
+    personality: str
+    scenario: str
+    system_prompt: str
+    char_greeting: str
+    example_dialogue: str
+    world_scenario: str
+    char_persona: str
+    char_name: str
+
+
+def default_character() -> Character:
+    return {
+        "creator": "",
+        "description": "",
+        "first_mes": "",
+        "mes_example": "",
+        "name": "",
+        "personality": "",
+        "scenario": "",
+        "system_prompt": "",
+        "char_greeting": "",
+        "example_dialogue": "",
+        "world_scenario": "",
+        "char_persona": "",
+        "char_name": "",
+    }
 
 
 class CharacterSet(Iterator):
@@ -22,7 +57,7 @@ class CharacterSet(Iterator):
             )
         )
 
-    def __next__(self):
+    def __next__(self) -> Character:
         while True:
             try:
                 bt.logging.debug("Retrieving data from dataset...")
@@ -40,7 +75,7 @@ class CharacterSet(Iterator):
 
 
 class MockCharacterSet(Iterator):
-    def __next__(self):
+    def __next__(self) -> Character:
         return {
             "creator": "a",
             "description": "a",

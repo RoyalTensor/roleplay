@@ -31,11 +31,15 @@ from prompting.validators.misc import ttl_get_block
 from prompting.validators.prompts import followup_prompt, answer_prompt, augment_prompt
 from prompting.validators.utils import check_uid_availability
 from prompting.validators.tasks import (
-    Task,
+    RoleplayTask,
     create_summarization_task,
     create_qg_task,
     create_qa_task,
+    create_message_from_description_task,
 )
+from prompting.protocol import Message
+
+from prompting.validators.characterset import CharacterSet, Character
 
 import prompting
 
@@ -77,6 +81,7 @@ def get_random_uids(self, k: int, exclude: List[int] = None) -> torch.LongTensor
     uids = torch.tensor(random.sample(available_uids, k))
     return uids'''
 
+
 def get_random_uids(self, k: int, exclude: List[int] = None) -> torch.LongTensor:
     """Returns k available random uids from the metagraph.
     Args:
@@ -103,14 +108,26 @@ def get_random_uids(self, k: int, exclude: List[int] = None) -> torch.LongTensor
     if len(candidate_uids) < k:
         k = len(candidate_uids)
 
-    uids = torch.tensor(random.sample(candidate_uids, k)) if candidate_uids else torch.LongTensor([])
+    uids = (
+        torch.tensor(random.sample(candidate_uids, k))
+        if candidate_uids
+        else torch.LongTensor([])
+    )
     return uids
 
 
-
-async def run_step(self, task: Task, k: int, timeout: float, exclude: list = []):
+async def run_step(
+    self, task: RoleplayTask, k: int, timeout: float, exclude: list = []
+):
     task_name = task.task_name
     prompt = task.compose_prompt()
+
+    task_message: Message = {
+        "name": "user",
+        "content": prompt,
+    }
+
+    character: Character = task.character
 
     bt.logging.debug("run_step", task_name)
 
@@ -120,9 +137,13 @@ async def run_step(self, task: Task, k: int, timeout: float, exclude: list = [])
     # Get the list of uids to query for this step.
     uids = get_random_uids(self, k=k, exclude=exclude).to(self.device)
     axons = [self.metagraph.axons[uid] for uid in uids]
-    synapse = prompting.protocol.Prompting(roles=["user"], messages=[prompt])
-
-    pdb.set_trace()
+    synapse = prompting.protocol.Prompting(
+        character_name=character["name"],
+        character_info=character["description"],
+        char_names=[character["name"]],
+        user_names=["user"],
+        messages=[task_message],
+    )
 
     # Make calls to the network with the prompt.
     responses: List[bt.Synapse] = await self.dendrite(
@@ -204,7 +225,6 @@ async def run_step(self, task: Task, k: int, timeout: float, exclude: list = [])
         str(comp.dendrite.status_code) for comp in responses
     ]
 
-
     best: str = completions[rewards.argmax(dim=0)].strip()
 
     # Get completion times
@@ -257,66 +277,86 @@ async def run_step(self, task: Task, k: int, timeout: float, exclude: list = [])
     # Return the event.
     return event
 
-async def query_character_flow(self):
-    
-    pass
 
-async def questions_and_answers_around_summary_flow(self):
-    # Obtain a unique context from the dataset.
-    data = next(self.dataset)["text"]
+async def run_character_flow(self):
+    # Choose some random character
+    character: Character = next(self.character_set)
 
-    random_cutoff = random.randint(15, 30)
-    # Truncate context to a limited set of sentences.
-    base_text = ".".join(data.split(".", maxsplit=random_cutoff)[:-1])
+    random_sentence_cutoff = random.randint(20, 30)
 
-    # Create a summary task from the context.
-    summary_task: Task = create_summarization_task(base_text)
+    # Generate a message from the description
+    description = ".".join(
+        character["description"].split(".", maxsplit=random_sentence_cutoff)[:-1]
+    )
+    message_from_description_task: RoleplayTask = create_message_from_description_task(
+        f"Your name is {character['name']}. Here is your character description: {description}.",
+        character,
+    )
 
-
-    # Request a summary, given the original context.
-    summarization_event = await run_step(
+    message_from_description_event = await run_step(
         self,
-        task=summary_task,
+        task=message_from_description_task,
         k=self.config.neuron.followup_sample_size,
         timeout=self.config.neuron.followup_timeout,
     )
 
-    best_summary = summarization_event["best"]
-    # exclude = summarization_event["uids"]
-    best_summary_context = "### SUMMARY CONTEXT:\n" + best_summary
 
-    for k in range(self.config.neuron.num_followup_steps):
-        # Get a followup question, given the summarized context.
-        qg_task = create_qg_task(base_text=best_summary_context, index=k)
+# async def questions_and_answers_around_summary_flow(self):
+#     # Obtain a unique context from the dataset.
+#     data = next(self.dataset)["text"]
 
-        qg_event = await run_step(
-            self,
-            task=qg_task,
-            k=self.config.neuron.followup_sample_size,
-            timeout=self.config.neuron.followup_timeout,
-            # exclude=exclude,
-        )
-        # exclude += qg_event["uids"]
+#     random_cutoff = random.randint(20, 30)
+#     # Truncate context to a limited set of sentences.
+#     base_text = ".".join(data.split(".", maxsplit=random_cutoff)[:-1])
 
-        # Adds the best question to the prompt context.
-        best_question = qg_event["best"]
-        best_question_prompt = (
-            best_summary_context + f"\n### QUESTION {k}:\n{best_question}"
-        )
+#     # Create a summary task from the context.
+#     summary_task: Task = create_summarization_task(base_text)
 
-        qa_task = create_qa_task(best_question_prompt, index=k)
+#     # Request a summary, given the original context.
+#     summarization_event = await run_step(
+#         self,
+#         task=summary_task,
+#         k=self.config.neuron.followup_sample_size,
+#         timeout=self.config.neuron.followup_timeout,
+#     )
 
-        qa_event = await run_step(
-            self,
-            task=qa_task,
-            k=self.config.neuron.answer_sample_size,
-            timeout=self.config.neuron.answer_timeout,
-            # exclude=exclude,
-        )
+#     best_summary = summarization_event["best"]
+#     # exclude = summarization_event["uids"]
+#     best_summary_context = "### SUMMARY CONTEXT:\n" + best_summary
 
-        # exclude += qa_event["uids"]
+#     for k in range(self.config.neuron.num_followup_steps):
+#         # Get a followup question, given the summarized context.
+#         qg_task = create_qg_task(base_text=best_summary_context, index=k)
+
+#         qg_event = await run_step(
+#             self,
+#             task=qg_task,
+#             k=self.config.neuron.followup_sample_size,
+#             timeout=self.config.neuron.followup_timeout,
+#             # exclude=exclude,
+#         )
+#         # exclude += qg_event["uids"]
+
+#         # Adds the best question to the prompt context.
+#         best_question = qg_event["best"]
+#         best_question_prompt = (
+#             best_summary_context + f"\n### QUESTION {k}:\n{best_question}"
+#         )
+
+#         qa_task = create_qa_task(best_question_prompt, index=k)
+
+#         qa_event = await run_step(
+#             self,
+#             task=qa_task,
+#             k=self.config.neuron.answer_sample_size,
+#             timeout=self.config.neuron.answer_timeout,
+#             # exclude=exclude,
+#         )
+
+#         # exclude += qa_event["uids"]
 
 
 async def forward(self):
     # Definition of flow to be executed at forward step
-    await questions_and_answers_around_summary_flow(self)
+    # await questions_and_answers_around_summary_flow(self)
+    await run_character_flow(self)
