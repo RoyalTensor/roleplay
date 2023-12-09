@@ -24,10 +24,9 @@ import bittensor as bt
 from starlette.responses import StreamingResponse
 
 
-class Prompting(bt.Synapse):
+class PromptingMixin(pydantic.BaseModel):
     """
-    The Prompting subclass of the Synapse class encapsulates the functionalities related to prompting scenarios.
-
+    
     It specifies three fields - `roles`, `messages` and `completion` - that define the state of the Prompting object.
     The `roles` and `messages` are read-only fields defined during object initialization, and `completion` is a mutable
     field that can be updated as the prompting scenario progresses.
@@ -40,6 +39,47 @@ class Prompting(bt.Synapse):
         messages (List[str]): A list of messages in the prompting scenario. This field is both mandatory and immutable.
         completion (str): A string that captures completion of the prompt. This field is mutable.
         required_hash_fields List[str]: A list of fields that are required for the hash.
+
+    """
+
+    class Config:
+        """
+        Pydantic model configuration class for Prompting. This class sets validation of attribute assignment as True.
+        validate_assignment set to True means the pydantic model will validate attribute assignments on the class.
+        """
+
+        validate_assignment = True
+
+    roles: List[str] = pydantic.Field(
+        ...,
+        title="Roles",
+        description="A list of roles in the Prompting scenario. Immuatable.",
+        allow_mutation=False,
+    )
+
+    messages: List[str] = pydantic.Field(
+        ...,
+        title="Messages",
+        description="A list of messages in the Prompting scenario. Immutable.",
+        allow_mutation=False,
+    )
+
+    completion: str = pydantic.Field(
+        "",
+        title="Completion",
+        description="Completion status of the current Prompting object. This attribute is mutable and can be updated.",
+    )
+
+    required_hash_fields: List[str] = pydantic.Field(
+        ["messages"],
+        title="Required Hash Fields",
+        description="A list of required fields for the hash.",
+        allow_mutation=False,
+    )
+
+class Prompting(PromptingMixin, bt.Synapse):
+    """
+    The Prompting subclass of the Synapse class encapsulates the functionalities related to prompting scenarios.
 
     Methods:
         deserialize() -> "Prompting": Returns the instance of the current object.
@@ -79,13 +119,6 @@ class Prompting(bt.Synapse):
     `roles` and `messages` fields, and update the `completion` field.
     """
 
-    class Config:
-        """
-        Pydantic model configuration class for Prompting. This class sets validation of attribute assignment as True.
-        validate_assignment set to True means the pydantic model will validate attribute assignments on the class.
-        """
-
-        validate_assignment = True
 
     def deserialize(self) -> "Prompting":
         """
@@ -100,35 +133,9 @@ class Prompting(bt.Synapse):
         """
         return self
 
-    roles: List[str] = pydantic.Field(
-        ...,
-        title="Roles",
-        description="A list of roles in the Prompting scenario. Immuatable.",
-        allow_mutation=False,
-    )
-
-    messages: List[str] = pydantic.Field(
-        ...,
-        title="Messages",
-        description="A list of messages in the Prompting scenario. Immutable.",
-        allow_mutation=False,
-    )
-
-    completion: str = pydantic.Field(
-        "",
-        title="Completion",
-        description="Completion status of the current Prompting object. This attribute is mutable and can be updated.",
-    )
-
-    required_hash_fields: List[str] = pydantic.Field(
-        ["messages"],
-        title="Required Hash Fields",
-        description="A list of required fields for the hash.",
-        allow_mutation=False,
-    )
 
 
-class StreamPrompting(bt.StreamingSynapse):
+class StreamPrompting(PromptingMixin, bt.StreamingSynapse):
     """
     StreamPrompting is a specialized implementation of the `StreamingSynapse` tailored for prompting functionalities within
     the Bittensor network. This class is intended to interact with a streaming response that contains a sequence of tokens,
@@ -164,32 +171,6 @@ class StreamPrompting(bt.StreamingSynapse):
     subclasses to further customize behavior for specific prompting scenarios or requirements.
     """
 
-    roles: List[str] = pydantic.Field(
-        ...,
-        title="Roles",
-        description="A list of roles in the Prompting scenario. Immuatable.",
-        allow_mutation=False,
-    )
-
-    messages: List[str] = pydantic.Field(
-        ...,
-        title="Messages",
-        description="A list of messages in the Prompting scenario. Immutable.",
-        allow_mutation=False,
-    )
-
-    required_hash_fields: List[str] = pydantic.Field(
-        ["messages"],
-        title="Required Hash Fields",
-        description="A list of required fields for the hash.",
-        allow_mutation=False,
-    )
-
-    completion: str = pydantic.Field(
-        "",
-        title="Completion",
-        description="Completion status of the current Prompting object. This attribute is mutable and can be updated.",
-    )
 
     async def process_streaming_response(self, response: StreamingResponse):
         """
