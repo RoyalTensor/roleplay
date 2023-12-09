@@ -21,6 +21,8 @@ import bittensor as bt
 from datasets import load_dataset
 from collections.abc import Iterator
 
+# TODO: Remove
+
 
 class Dataset(Iterator):
     def __init__(self):

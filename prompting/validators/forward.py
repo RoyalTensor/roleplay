@@ -122,6 +122,8 @@ async def run_step(self, task: Task, k: int, timeout: float, exclude: list = [])
     axons = [self.metagraph.axons[uid] for uid in uids]
     synapse = prompting.protocol.Prompting(roles=["user"], messages=[prompt])
 
+    pdb.set_trace()
+
     # Make calls to the network with the prompt.
     responses: List[bt.Synapse] = await self.dendrite(
         axons=axons,
@@ -255,6 +257,9 @@ async def run_step(self, task: Task, k: int, timeout: float, exclude: list = [])
     # Return the event.
     return event
 
+async def query_character_flow(self):
+    
+    pass
 
 async def questions_and_answers_around_summary_flow(self):
     # Obtain a unique context from the dataset.
