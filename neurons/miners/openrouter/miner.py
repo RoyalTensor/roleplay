@@ -42,7 +42,7 @@ class OpenRouterMiner(Miner):
             "--openrouter.api_key",
             type=str,
             default=None,
-            help="OpenAI API key for authenticating requests."
+            help="OpenRouter API key for authenticating requests."
         )
         pass
 
