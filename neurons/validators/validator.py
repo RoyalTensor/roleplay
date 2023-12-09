@@ -25,6 +25,7 @@ from traceback import print_exception
 import prompting
 
 from prompting.validators.dataset import Dataset, MockDataset
+from prompting.validators.characterset import CharacterSet, MockCharacterSet
 from prompting.validators.gating import GatingModel, SentenceEmbedGatingModel
 from prompting.validators.mock import MockDendrite, MockRewardModel, MockGatingModel
 
@@ -81,6 +82,14 @@ class neuron:
     wallet: "bt.wallet"
     metagraph: "bt.metagraph"
 
+    def init_characterset(self):
+        bt.logging.debug("loading", "characterset")
+        if self.config.neuron.mock_character_set:
+            self.character_set = MockCharacterSet()
+        else:
+            self.character_set = CharacterSet()
+        bt.logging.debug(str(self.character_set))
+
     def __init__(self):
         self.config = neuron.config()
         self.check_config(self.config)
@@ -126,6 +135,7 @@ class neuron:
         self.moving_averaged_scores = torch.zeros((self.metagraph.n)).to(self.device)
         bt.logging.debug(str(self.moving_averaged_scores))
 
+        # TODO: Remove
         # Dataset: used to generate the base prompts ( initial randomness. )
         bt.logging.debug("loading", "dataset")
         if self.config.neuron.mock_dataset:
@@ -133,6 +143,8 @@ class neuron:
         else:
             self.dataset = Dataset()
         bt.logging.debug(str(self.dataset))
+
+        self.init_characterset()
 
         # Init the gating model which learns which miners to select for each query.
         bt.logging.debug("loading", "gating_model")

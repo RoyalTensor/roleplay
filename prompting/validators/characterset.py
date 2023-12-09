@@ -39,6 +39,20 @@ class CharacterSet(Iterator):
                 self.character_set = self.load_iterator()
 
 
-class MockDataset(Iterator):
+class MockCharacterSet(Iterator):
     def __next__(self):
-        return {"text": "What is the capital of Texas?"}
+        return {
+            "creator": "a",
+            "description": "a",
+            "first_mes": "a",
+            "mes_example": "a",
+            "name": "a",
+            "personality": "a",
+            "scenario": "a",
+            "system_prompt": "a",
+            "char_greeting": "a",
+            "example_dialogue": "a",
+            "world_scenario": "a",
+            "char_persona": "a",
+            "char_name": "a",
+        }
