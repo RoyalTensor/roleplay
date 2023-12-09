@@ -167,3 +167,4 @@ app.config.js
 .idea/
 
 /wandb
+/.vscode
