@@ -34,7 +34,6 @@ def check_config(cls, config: "bt.Config"):
     if config.mock:
         config.neuron.mock_reward_models = True
         config.neuron.mock_gating_model = True
-        config.neuron.mock_dataset = True  # TODO: REMOVE
         config.neuron.mock_character_set = True
         config.wallet._mock = True
 
@@ -312,9 +311,9 @@ def add_args(cls, parser):
         default=False,
     )
     parser.add_argument(
-        "--neuron.mock_dataset",
+        "--neuron.mock_character_set",
         action="store_true",
-        help="Dont download the dataset.",
+        help="Dont download the character_set.",
         default=False,
     )
     parser.add_argument(

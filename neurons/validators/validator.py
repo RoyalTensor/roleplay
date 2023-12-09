@@ -24,7 +24,6 @@ from traceback import print_exception
 
 import prompting
 
-from prompting.validators.dataset import Dataset, MockDataset
 from prompting.validators.characterset import CharacterSet, MockCharacterSet
 from prompting.validators.gating import GatingModel, SentenceEmbedGatingModel
 from prompting.validators.mock import MockDendrite, MockRewardModel, MockGatingModel
@@ -134,15 +133,6 @@ class neuron:
         bt.logging.debug("loading", "moving_averaged_scores")
         self.moving_averaged_scores = torch.zeros((self.metagraph.n)).to(self.device)
         bt.logging.debug(str(self.moving_averaged_scores))
-
-        # TODO: Remove
-        # Dataset: used to generate the base prompts ( initial randomness. )
-        bt.logging.debug("loading", "dataset")
-        if self.config.neuron.mock_dataset:
-            self.dataset = MockDataset()
-        else:
-            self.dataset = Dataset()
-        bt.logging.debug(str(self.dataset))
 
         self.init_characterset()
 

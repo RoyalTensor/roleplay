@@ -25,7 +25,7 @@ from . import reward
 from . import utils
 from . import weights
 from . import event
-from . import dataset
+
 from . import characterset
 
 __version__ = "2.1.5"
