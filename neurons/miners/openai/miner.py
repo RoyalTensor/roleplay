@@ -49,7 +49,7 @@ class OpenAIMiner(Miner):
             "--openai.api_key",
             type=str,
             default=None,
-            help="OpenAI API key for authenticating requests."
+            help="OpenAI API key for authenticating requests.",
         )
 
         parser.add_argument(
@@ -133,7 +133,9 @@ class OpenAIMiner(Miner):
         if api_key is None:
             api_key = config.openai.api_key  # Fetch from configuration
             if api_key is None:
-                api_key = os.getenv("OPENAI_API_KEY")  # Fallback to environment variable
+                api_key = os.getenv(
+                    "OPENAI_API_KEY"
+                )  # Fallback to environment variable
                 if api_key is None:
                     raise ValueError(
                         "OpenAI API key is required: the miner requires an `OPENAI_API_KEY` either passed directly to the constructor, defined in the configuration, or set in the environment variables."
@@ -146,7 +148,7 @@ class OpenAIMiner(Miner):
         if config.wandb.on:
             self.wandb_run.tags = self.wandb_run.tags + ("openai_miner",)
 
-        # Rest of the initialization code...
+        self.client = openai.OpenAI(api_key=api_key)
 
     def prompt(self, synapse: Prompting) -> Prompting:
         """
@@ -178,20 +180,24 @@ class OpenAIMiner(Miner):
             generation process.
         """
         messages = [
-            {"role": role, "content": message}
-            for role, message in zip(synapse.roles, synapse.messages)
+            {"role": message.name, "content": message.content}
+            for message in synapse.messages
         ]
-        bittensor.logging.debug(f"messages: {messages}")
-        resp = openai.ChatCompletion.create(
-            model=self.config.openai.model_name,
-            messages=messages,
-            temperature=self.config.openai.temperature,
-            max_tokens=self.config.openai.max_tokens,
-            top_p=self.config.openai.top_p,
-            frequency_penalty=self.config.openai.frequency_penalty,
-            presence_penalty=self.config.openai.presence_penalty,
-            n=self.config.openai.n,
-        )["choices"][0]["message"]["content"]
+        bittensor.logging.debug(f"What", f" {synapse.messages}")
+        resp = (
+            self.client.chat.completions.create(
+                model=self.config.openai.model_name,
+                messages=messages,
+                temperature=self.config.openai.temperature,
+                max_tokens=self.config.openai.max_tokens,
+                top_p=self.config.openai.top_p,
+                frequency_penalty=self.config.openai.frequency_penalty,
+                presence_penalty=self.config.openai.presence_penalty,
+                n=self.config.openai.n,
+            )
+            .choices[0]
+            .message.content
+        )
         synapse.completion = resp
         bittensor.logging.debug(f"completion: {resp}")
         return synapse

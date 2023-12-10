@@ -20,12 +20,8 @@ from enum import Enum
 
 
 class RewardModelType(Enum):
-    dpo = "dpo_reward_model"
-    rlhf = "rlhf_reward_model"
-    reciprocate = "reciprocate_reward_model"
-    dahoas = "dahoas_reward_model"
+    mistral = "mistral_reward_model"
     diversity = "diversity_reward_model"
-    prompt = "prompt_reward_model"
     blacklist = "blacklist_filter"
     nsfw = "nsfw_filter"
     relevance = "relevance_filter"
@@ -41,8 +37,4 @@ class DefaultRewardFrameworkConfig:
     Note: All the weights should add up to 1.0.
     """
 
-    dpo_model_weight: float = 0.6
-    rlhf_model_weight: float = 0
-    reciprocate_model_weight: float = 0.4
-    dahoas_model_weight: float = 0
-    prompt_model_weight: float = 0
+    mistral_model_weight: float = 1.0

@@ -39,20 +39,18 @@ class EventTestCase(unittest.TestCase):
             "step_length": 1.0,
             "best": "test-best",
             "rewards": [1.0],
-            RewardModelType.dahoas.value: [1.0],
             RewardModelType.blacklist.value: [1.0],
             RewardModelType.nsfw.value: [1.0],
-            RewardModelType.reciprocate.value: [1.0],
+            RewardModelType.misc.value: [1.0],
             RewardModelType.diversity.value: [1.0],
             RewardModelType.dpo.value: [1.0],
             RewardModelType.rlhf.value: [1.0],
             RewardModelType.prompt.value: [1.0],
             RewardModelType.relevance.value: [1.0],
             RewardModelType.task_validator.value: [1.0],
-            RewardModelType.dahoas.value + "_normalized": [1.0],
             RewardModelType.blacklist.value + "_normalized": [1.0],
             RewardModelType.nsfw.value + "_normalized": [1.0],
-            RewardModelType.reciprocate.value + "_normalized": [1.0],
+            RewardModelType.mistral.value + "_normalized": [1.0],
             RewardModelType.diversity.value + "_normalized": [1.0],
             RewardModelType.dpo.value + "_normalized": [1.0],
             RewardModelType.rlhf.value + "_normalized": [1.0],
@@ -109,24 +107,16 @@ class EventTestCase(unittest.TestCase):
 
         # Assert: Check that all reward columns that are not logged are set to None
         assert event.set_weights is None
-        assert event.dahoas_reward_model is None
         assert event.blacklist_filter is None
         assert event.nsfw_filter is None
-        assert event.reciprocate_reward_model is None
+        assert event.mistral_reward_model is None
         assert event.diversity_reward_model is None
-        assert event.dpo_reward_model is None
-        assert event.rlhf_reward_model is None
-        assert event.prompt_reward_model is None
         assert event.relevance_filter is None
         assert event.task_validator_filter is None
 
-        assert event.dahoas_reward_model_normalized is None
         assert event.nsfw_filter_normalized is None
-        assert event.reciprocate_reward_model_normalized is None
+        assert event.mistral_reward_model_normalized is None
         assert event.diversity_reward_model_normalized is None
-        assert event.dpo_reward_model_normalized is None
-        assert event.rlhf_reward_model_normalized is None
-        assert event.prompt_reward_model_normalized is None
         assert event.relevance_filter_normalized is None
         assert event.task_validator_filter_normalized is None
 
@@ -167,23 +157,15 @@ class EventTestCase(unittest.TestCase):
 
         # Assert: Check that all reward columns that are not logged are set to None
         assert event.set_weights is None
-        assert event.dahoas_reward_model is None
         assert event.blacklist_filter is None
         assert event.nsfw_filter is None
-        assert event.reciprocate_reward_model is None
+        assert event.mistral_reward_model is None
         assert event.diversity_reward_model is None
-        assert event.dpo_reward_model is None
-        assert event.rlhf_reward_model is None
-        assert event.prompt_reward_model is None
         assert event.relevance_filter is None
         assert event.task_validator_filter is None
 
-        assert event.dahoas_reward_model_normalized is None
         assert event.nsfw_filter_normalized is None
-        assert event.reciprocate_reward_model_normalized is None
+        assert event.mistral_reward_model_normalized is None
         assert event.diversity_reward_model_normalized is None
-        assert event.dpo_reward_model_normalized is None
-        assert event.rlhf_reward_model_normalized is None
-        assert event.prompt_reward_model_normalized is None
         assert event.relevance_filter_normalized is None
         assert event.task_validator_filter_normalized is None

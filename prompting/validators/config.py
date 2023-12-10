@@ -268,34 +268,10 @@ def add_args(cls, parser):
     )
 
     parser.add_argument(
-        "--reward.reciprocate_weight",
+        "--reward.mistral_weight",
         type=float,
-        help="Weight for the reciprocate reward model",
-        default=DefaultRewardFrameworkConfig.reciprocate_model_weight,
-    )
-    parser.add_argument(
-        "--reward.dpo_weight",
-        type=float,
-        help="Weight for the dpo reward model",
-        default=DefaultRewardFrameworkConfig.dpo_model_weight,
-    )
-    parser.add_argument(
-        "--reward.rlhf_weight",
-        type=float,
-        help="Weight for the rlhf reward model",
-        default=DefaultRewardFrameworkConfig.rlhf_model_weight,
-    )
-    parser.add_argument(
-        "--reward.dahoas_weight",
-        type=float,
-        help="Weight for the dahoas reward model",
-        default=DefaultRewardFrameworkConfig.dahoas_model_weight,
-    )
-    parser.add_argument(
-        "--reward.prompt_based_weight",
-        type=float,
-        help="Weight for the prompt-based reward model",
-        default=DefaultRewardFrameworkConfig.prompt_model_weight,
+        help="Weight for the mistral reward model",
+        default=DefaultRewardFrameworkConfig.mistral_model_weight,
     )
 
     parser.add_argument(

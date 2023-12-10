@@ -137,6 +137,7 @@ async def run_step(
     # Get the list of uids to query for this step.
     uids = get_random_uids(self, k=k, exclude=exclude).to(self.device)
     axons = [self.metagraph.axons[uid] for uid in uids]
+
     synapse = prompting.protocol.Prompting(
         character_name=character["name"],
         character_info=character["description"],
@@ -179,6 +180,7 @@ async def run_step(
         self.device
     )
 
+    # Computes the rewards for the responses given the prompt.
     for weight_i, reward_fn_i in zip(self.reward_weights, self.reward_functions):
         reward_i_normalized, reward_event = reward_fn_i.apply(
             task.base_text, responses, task_name

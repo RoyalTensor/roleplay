@@ -69,7 +69,9 @@ class BaseRewardModel:
 
     def normalize_rewards(self, rewards: torch.FloatTensor) -> torch.FloatTensor:
         """
-        This method normalizes the given rewards by updating the moving mean and variance statistics. The rewards are first standardized, and then scaled to the 0-1 range using a cumulative distribution function (CDF) to ensure they're in a comparable range across different environments.
+        This method normalizes the given rewards by updating the moving mean and variance statistics.
+        The rewards are first standardized, and then scaled to the 0-1 range using a cumulative distribution function (CDF)
+        to ensure they're in a comparable range across different environments.
 
         Args:
         rewards (torch.FloatTensor): The reward values to be normalized.
