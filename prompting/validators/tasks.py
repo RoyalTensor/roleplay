@@ -41,6 +41,17 @@ class Task(ABC):
     task_type: str
     criteria: List[TaskCriterion] = field(default_factory=list)
 
+    def get_criteria_strs(self) -> List[str]:
+        # For getting criterions to give to the synapse
+        return [criterion.compose_text() for criterion in self.criteria]
+
+    def compose_criteria_str(self) -> str:
+        criteria_bullet_points = [
+            f"- {criterion.compose_text()}" for criterion in self.criteria
+        ]
+        criteria_bullet_points_str = "\n".join(criteria_bullet_points)
+        return criteria_bullet_points_str
+
     @abstractmethod
     def compose_prompt(self) -> str:
         ...
@@ -57,11 +68,7 @@ class RoleplayTask(Task, ABC):
 
 class MessageFromDescriptionTask(RoleplayTask):
     def compose_prompt(self) -> str:
-        # Aggregates criteria in bullet points
-        criteria_bullet_points = [
-            f"- {criterion.compose_text()}" for criterion in self.criteria
-        ]
-        criteria_bullet_points_str = "\n".join(criteria_bullet_points)
+        criteria_bullet_points_str = self.compose_criteria_str()
 
         prompt_template = textwrap.dedent(
             """\
@@ -93,7 +100,7 @@ def create_message_from_description_task(
         ),
         MatchLengthCriteria(
             penalty=0.25,
-            target_length=random.randint(4, 8),
+            target_length=random.randint(4, 10),
             unit=TextLengthUnitEnum.SENTENCES,
         ),
     ]

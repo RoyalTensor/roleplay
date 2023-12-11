@@ -23,13 +23,19 @@ from typing import List
 import bittensor as bt
 from starlette.responses import StreamingResponse
 
-class Message (pydantic.BaseModel):
-    name: str = pydantic.Field(..., title="Name", description="The name field of the message.")
-    content: str = pydantic.Field(..., title="Content", description="The content of the message.")
+
+class Message(pydantic.BaseModel):
+    name: str = pydantic.Field(
+        ..., title="Name", description="The name field of the message."
+    )
+    content: str = pydantic.Field(
+        ..., title="Content", description="The content of the message."
+    )
+
 
 class PromptingMixin(pydantic.BaseModel):
     """
-    
+
     It specifies three fields - `roles`, `messages` and `completion` - that define the state of the Prompting object.
     The `roles` and `messages` are read-only fields defined during object initialization, and `completion` is a mutable
     field that can be updated as the prompting scenario progresses.
@@ -77,7 +83,12 @@ class PromptingMixin(pydantic.BaseModel):
         description="Names of all of the AI characters.",
         allow_mutation=False,
     )
-
+    criteria: List[str] = pydantic.Field(
+        ...,
+        title="Criteria",
+        description="Criteria for the AI response.",
+        allow_mutation=False,
+    )
     messages: List[Message] = pydantic.Field(
         ...,
         title="Messages",
@@ -97,6 +108,7 @@ class PromptingMixin(pydantic.BaseModel):
         description="A list of required fields for the hash.",
         allow_mutation=False,
     )
+
 
 class Prompting(PromptingMixin, bt.Synapse):
     """
@@ -140,7 +152,6 @@ class Prompting(PromptingMixin, bt.Synapse):
     `roles` and `messages` fields, and update the `completion` field.
     """
 
-
     def deserialize(self) -> "Prompting":
         """
         Returns the instance of the current Prompting object.
@@ -153,7 +164,6 @@ class Prompting(PromptingMixin, bt.Synapse):
             Prompting: The current instance of the Prompting class.
         """
         return self
-
 
 
 class StreamPrompting(PromptingMixin, bt.StreamingSynapse):
@@ -191,7 +201,6 @@ class StreamPrompting(PromptingMixin, bt.StreamingSynapse):
     Note: While you can directly use the `StreamPrompting` class, it's designed to be extensible. Thus, you can create
     subclasses to further customize behavior for specific prompting scenarios or requirements.
     """
-
 
     async def process_streaming_response(self, response: StreamingResponse):
         """

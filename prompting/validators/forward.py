@@ -116,48 +116,9 @@ def get_random_uids(self, k: int, exclude: List[int] = None) -> torch.LongTensor
     return uids
 
 
-async def run_step(
-    self, task: RoleplayTask, k: int, timeout: float, exclude: list = []
+def restrict_format_followup_responses(
+    self, responses: List[bt.Synapse], task_name: str
 ):
-    task_name = task.task_name
-    prompt = task.compose_prompt()
-
-    task_message: Message = {
-        "name": "user",
-        "content": prompt,
-    }
-
-    character: Character = task.character
-
-    bt.logging.debug("run_step", task_name)
-
-    # Record event start time.
-    event = {"name": task_name, "task_type": task.task_type}
-    start_time = time.time()
-    # Get the list of uids to query for this step.
-    uids = get_random_uids(self, k=k, exclude=exclude).to(self.device)
-    axons = [self.metagraph.axons[uid] for uid in uids]
-
-    synapse = prompting.protocol.Prompting(
-        character_name=character["name"],
-        character_info=character["description"],
-        char_names=[character["name"]],
-        user_names=["user"],
-        messages=[task_message],
-    )
-
-    # Make calls to the network with the prompt.
-    responses: List[bt.Synapse] = await self.dendrite(
-        axons=axons,
-        synapse=synapse,
-        timeout=timeout,
-    )
-
-    # Update blacklist with completions so that n-gram filtering can be applied
-    self.blacklist.add(
-        [response.completion for response in responses if response.completion]
-    )
-
     # Restrict the format of acceptable followup completions.
     for response in responses:
         # remove leading and trailing periods
@@ -175,6 +136,8 @@ async def run_step(
                 completion = completion.split(".")[-1].split(".")[-1]
                 response.completion = " ".join(completion.split(" ")[-max_words:])
 
+
+def compute_rewards(self, task: RoleplayTask, responses: List[bt.Synapse]):
     # Compute the rewards for the responses given the prompt.
     rewards: torch.FloatTensor = torch.zeros(len(responses), dtype=torch.float32).to(
         self.device
@@ -211,6 +174,56 @@ async def run_step(
             event[penalty_fn_i.name + "_adjusted"] = adjusted_penalty_i.tolist()
             event[penalty_fn_i.name + "_applied"] = applied_penalty_i.tolist()
         bt.logging.trace(str(penalty_fn_i.name), applied_penalty_i.tolist())
+
+    return rewards
+
+
+async def run_step(
+    self, task: RoleplayTask, k: int, timeout: float, exclude: list = []
+):
+    task_name = task.task_name
+    prompt = task.compose_prompt()
+
+    task_message: Message = {
+        "name": "user",
+        "content": prompt,
+    }
+
+    character: Character = task.character
+
+    bt.logging.debug("run_step", task_name)
+
+    # Record event start time.
+    event = {"name": task_name, "task_type": task.task_type}
+    start_time = time.time()
+    # Get the list of uids to query for this step.
+    uids = get_random_uids(self, k=k, exclude=exclude).to(self.device)
+    axons = [self.metagraph.axons[uid] for uid in uids]
+
+    synapse = prompting.protocol.Prompting(
+        character_name=character["name"],
+        character_info=character["description"],
+        char_names=[character["name"]],
+        user_names=["user"],
+        messages=[task_message],
+        criteria=task.get_criteria_strs(),
+    )
+
+    # Make calls to the network with the prompt.
+    responses: List[bt.Synapse] = await self.dendrite(
+        axons=axons,
+        synapse=synapse,
+        timeout=timeout,
+    )
+
+    # Update blacklist with completions so that n-gram filtering can be applied
+    self.blacklist.add(
+        [response.completion for response in responses if response.completion]
+    )
+
+    restrict_format_followup_responses(self, responses, task_name)
+
+    rewards = compute_rewards(self, task, responses)
 
     # Train the gating model based on the predicted scores and the actual rewards.
     gating_scores: torch.FloatTensor = self.gating_model(prompt).to(self.device)
