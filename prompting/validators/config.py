@@ -252,13 +252,13 @@ def add_args(cls, parser):
         "--neuron.relevance_off",
         action="store_true",
         help="Dont apply the relevance reward model",
-        default=False,
+        default=True,
     )
     parser.add_argument(
         "--neuron.diversity_off",
         action="store_true",
         help="Dont apply the diversity reward model",
-        default=False,
+        default=True,
     )
     parser.add_argument(
         "--neuron.task_validator_off",

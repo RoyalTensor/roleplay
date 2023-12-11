@@ -50,43 +50,69 @@ class Task(ABC):
             f"- {criterion.compose_text()}" for criterion in self.criteria
         ]
         criteria_bullet_points_str = "\n".join(criteria_bullet_points)
-        return criteria_bullet_points_str
-
+        text = textwrap.dedent("""\
+        The following criteria must be respected:
+        {criteria}
+        """)
+        return text.format(criteria = criteria_bullet_points_str)
+    
     @abstractmethod
-    def compose_prompt(self) -> str:
+    def compose_description(self) -> str:
         ...
 
+    def compose_prompt(self) -> str:
+        
+        text = textwrap.dedent(
+            """\
+            {description}
+            {criteria}
+            """
+        )
+        
+        return text.format(description = self.compose_description(), criteria = self.compose_criteria_str())
 
 @dataclass
 class RoleplayTask(Task, ABC):
     character: Character = field(default_factory=default_character)
 
     @abstractmethod
-    def compose_prompt(self) -> str:
+    def compose_description(self) -> str:
         ...
 
 
 class MessageFromDescriptionTask(RoleplayTask):
-    def compose_prompt(self) -> str:
-        criteria_bullet_points_str = self.compose_criteria_str()
-
-        prompt_template = textwrap.dedent(
-            """\
-        Please read the following character description delimited by the triple backticks carefully.
-        Your task is roleplay as the character described in the text and to write a message to me.
+    
+    def compose_description(self) -> str:
         
-        '''{base_text}'''
-        
-        The following criteria must be respected:
-        {criteria}
-        - Do not try to create questions or answers for your summarization. 
+        description = textwrap.dedent(
+            f"""\
+        Please read the following character description carefully.
+        Your task is roleplay as the character described in the text below and to write a message that would be typical of that character.
+        No matter what, do not break character.
         """
         )
+        return f"""{description}{self.base_text}"""
+    
+    # def compose_prompt(self) -> str:
+    #     criteria_bullet_points_str = self.compose_criteria_str()
 
-        prompt = prompt_template.format(
-            base_text=self.base_text, criteria=criteria_bullet_points_str
-        )
-        return prompt
+    #     prompt_template = textwrap.dedent(
+    #         """\
+    #     Please read the following character description carefully.
+    #     Your task is roleplay as the character described in the text below and to write a message that would be typical of that character.
+    #     No matter what, do not break character.
+        
+    #     {base_text}
+        
+    #     The following criteria must be respected:
+    #     {criteria}
+    #     """
+    #     )
+
+    #     prompt = prompt_template.format(
+    #         base_text=self.base_text, criteria=criteria_bullet_points_str
+    #     )
+    #     return prompt
 
 
 def create_message_from_description_task(

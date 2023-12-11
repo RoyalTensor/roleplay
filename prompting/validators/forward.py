@@ -139,7 +139,7 @@ def restrict_format_followup_responses(
 
 def compute_rewards(
     self, task: RoleplayTask, responses: List[bt.Synapse], task_name: str, event: dict
-):
+) -> torch.FloatTensor:
     # Compute the rewards for the responses given the prompt.
     rewards: torch.FloatTensor = torch.zeros(len(responses), dtype=torch.float32).to(
         self.device
@@ -152,17 +152,20 @@ def compute_rewards(
         )
         rewards += weight_i * reward_i_normalized.to(self.device)
         if not self.config.neuron.disable_log_rewards:
-            event = {**event, **reward_event}
+            event.update(reward_event)
         bt.logging.trace(str(reward_fn_i.name), reward_i_normalized.tolist())
+    
 
     for masking_fn_i in self.masking_functions:
         mask_i_normalized, reward_event = masking_fn_i.apply(
             task.base_text, responses, task_name
         )
         rewards *= mask_i_normalized.to(self.device)  # includes diversity
+
         if not self.config.neuron.disable_log_rewards:
-            event = {**event, **reward_event}
+            event.update(reward_event)
         bt.logging.trace(str(masking_fn_i.name), mask_i_normalized.tolist())
+        
 
     for penalty_fn_i in self.penalty_functions:
         (
@@ -171,6 +174,7 @@ def compute_rewards(
             applied_penalty_i,
         ) = penalty_fn_i.apply_penalties(responses, task)
         rewards *= applied_penalty_i.to(self.device)
+
         if not self.config.neuron.disable_log_rewards:
             event[penalty_fn_i.name + "_raw"] = raw_penalty_i.tolist()
             event[penalty_fn_i.name + "_adjusted"] = adjusted_penalty_i.tolist()
@@ -184,12 +188,13 @@ async def run_step(
     self, task: RoleplayTask, k: int, timeout: float, exclude: list = []
 ):
     task_name = task.task_name
-    prompt = task.compose_prompt()
 
     task_message: Message = {
-        "name": "user",
-        "content": prompt,
+        "name": "system",
+        "content": task.compose_description(), # Essentially the instruction (e.g. "Your task is...")
     }
+    
+    prompt = task.compose_prompt()
 
     character: Character = task.character
 
@@ -225,8 +230,8 @@ async def run_step(
 
     restrict_format_followup_responses(self, responses, task_name)
 
-    rewards = compute_rewards(self, task, responses, task_name, event)
-
+    rewards : torch.FloatTensor  = compute_rewards(self, task, responses, task_name, event)
+    
     # Train the gating model based on the predicted scores and the actual rewards.
     gating_scores: torch.FloatTensor = self.gating_model(prompt).to(self.device)
     gating_loss: torch.FloatTensor = self.gating_model.backward(
@@ -262,7 +267,7 @@ async def run_step(
     self.moving_averaged_scores: torch.FloatTensor = alpha * scattered_rewards + (
         1 - alpha
     ) * self.moving_averaged_scores.to(self.device)
-
+    
     # Log the step event.
     event.update(
         {

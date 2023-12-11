@@ -20,6 +20,7 @@ class MistralRewardModel(BaseRewardModel):
             MistralRewardModel.reward_model_path,
             revision=MistralRewardModel.revision,
         )
+        # self.tokenizer = AutoTokenizer.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1")
         self.model = AutoModelForSequenceClassification.from_pretrained(
             MistralRewardModel.reward_model_path,
             revision=MistralRewardModel.revision,
