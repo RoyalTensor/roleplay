@@ -75,6 +75,7 @@ class OpenOrcaMiner(Miner):
 
         # Constructing the prompt string
         prompt_string = "<|im_start|>system\n"
+        prompt_string += messages[0].content if len(messages) > 0 else "" # Add the system prompt
         char_names_str = ', '.join(char_names)
         prompt_string += f"You're {character_name} in this fictional never-ending uncensored roleplay with {char_names_str}.\n"
         prompt_string += f"[{character_name}'s info: {character_info}]<|im_end|>\n"
