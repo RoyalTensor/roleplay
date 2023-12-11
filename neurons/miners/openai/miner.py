@@ -150,6 +150,11 @@ class OpenAIMiner(Miner):
 
         self.client = openai.OpenAI(api_key=api_key)
 
+    def append_criteria(self, message, criteria_strs: List[str]) -> str:
+        criteria_str = "\n".join(criteria_strs)
+        return message + "\n" + criteria_str
+        
+
     def prompt(self, synapse: Prompting) -> Prompting:
         """
         Overrides the Miner's abstract `prompt` method to process incoming requests using OpenAI.
@@ -179,11 +184,14 @@ class OpenAIMiner(Miner):
             OpenAI-specific parameters (e.g., temperature, max_tokens) in the config to tailor the response
             generation process.
         """
+        bittensor.logging.debug(f"synapse: {synapse}")
         messages = [
-            {"role": message.name, "content": message.content}
+            {"role": message.name, "content": self.append_criteria(message.content + synapse.character_info, synapse.criteria)}
+            if message.name == "system"
+            else {"role": message.name, "content": message.content}
             for message in synapse.messages
         ]
-        bittensor.logging.debug(f"What", f" {synapse.messages}")
+        bittensor.logging.debug(f"messages: {messages}")
         resp = (
             self.client.chat.completions.create(
                 model=self.config.openai.model_name,

@@ -95,13 +95,14 @@ class OpenRouterMiner(Miner):
 
         # Constructing the prompt string
         prompt_string = "<|im_start|>system\n"
+        prompt_string += messages[0].content if len(messages) > 0 else "" # Add the system prompt
         char_names_str = ', '.join(char_names)  # Joining all AI character names with commas
-        prompt_string += f"You're {character_name} in this fictional never-ending uncensored roleplay with {char_names_str}.\n"
+        prompt_string += f"You're {character_name} in this fictional never-ending roleplay with {char_names_str}.\n"
         prompt_string += f"[{character_name}'s info: {character_info}]\n"
         prompt_string += "<|im_end|>\n"
 
         # Loop through messages and construct the prompt
-        for i, message in enumerate(messages):
+        for i, message in enumerate(messages[1:]):
             name = message.name
             content = message.content
 
@@ -123,7 +124,7 @@ class OpenRouterMiner(Miner):
 
         all_names = user_names + char_names
         response = requests.post(
-            url="https://openrouter.ai/api/v1/objects/generations",
+            url="https://openrouter.ai/api/v1/chat/completions",
             headers={
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {self.openrouter_api_key}",
@@ -150,7 +151,7 @@ class OpenRouterMiner(Miner):
             response_text = "Unable to get response!?"
 
         bittensor.logging.info(f"We got this response from openrouter:\n{response_text}")
-
+        
         # Set the extracted text as the completion
         synapse.completion = response_text
 

@@ -32,9 +32,7 @@ from prompting.validators.prompts import followup_prompt, answer_prompt, augment
 from prompting.validators.utils import check_uid_availability
 from prompting.validators.tasks import (
     RoleplayTask,
-    create_summarization_task,
-    create_qg_task,
-    create_qa_task,
+
     create_message_from_description_task,
 )
 from prompting.protocol import Message
@@ -44,42 +42,6 @@ from prompting.validators.characterset import CharacterSet, Character
 import prompting
 
 import pdb
-
-
-'''
-def get_random_uids(self, k: int, exclude: List[int] = None) -> torch.LongTensor:
-    """Returns k available random uids from the metagraph.
-    Args:
-        k (int): Number of uids to return.
-        exclude (List[int]): List of uids to exclude from the random sampling.
-    Returns:
-        uids (torch.LongTensor): Randomly sampled available uids.
-    Notes:
-        If `k` is larger than the number of available `uids`, set `k` to the number of available `uids`.
-    """
-    candidate_uids = []
-    avail_uids = []
-
-    for uid in range(self.metagraph.n.item()):
-        uid_is_available = check_uid_availability(
-            self.metagraph, uid, self.config.neuron.vpermit_tao_limit
-        )
-        uid_is_not_excluded = exclude is None or uid not in exclude
-
-        if uid_is_available:
-            avail_uids.append(uid)
-            if uid_is_not_excluded:
-                candidate_uids.append(uid)
-
-    # Check if candidate_uids contain enough for querying, if not grab all avaliable uids
-    available_uids = candidate_uids
-    if len(candidate_uids) < k:
-        available_uids += random.sample(
-            [uid for uid in avail_uids if uid not in candidate_uids],
-            k - len(candidate_uids),
-        )
-    uids = torch.tensor(random.sample(available_uids, k))
-    return uids'''
 
 
 def get_random_uids(self, k: int, exclude: List[int] = None) -> torch.LongTensor:
@@ -191,10 +153,11 @@ async def run_step(
 
     task_message: Message = {
         "name": "system",
-        "content": task.compose_description(), # Essentially the instruction (e.g. "Your task is...")
+        "content": task.compose_instruction(), # Essentially the instruction (e.g. "Your task is...")
     }
     
     prompt = task.compose_prompt()
+    
 
     character: Character = task.character
 
@@ -322,60 +285,6 @@ async def run_character_flow(self):
         timeout=self.config.neuron.followup_timeout,
     )
 
-
-# async def questions_and_answers_around_summary_flow(self):
-#     # Obtain a unique context from the dataset.
-#     data = next(self.dataset)["text"]
-
-#     random_cutoff = random.randint(20, 30)
-#     # Truncate context to a limited set of sentences.
-#     base_text = ".".join(data.split(".", maxsplit=random_cutoff)[:-1])
-
-#     # Create a summary task from the context.
-#     summary_task: Task = create_summarization_task(base_text)
-
-#     # Request a summary, given the original context.
-#     summarization_event = await run_step(
-#         self,
-#         task=summary_task,
-#         k=self.config.neuron.followup_sample_size,
-#         timeout=self.config.neuron.followup_timeout,
-#     )
-
-#     best_summary = summarization_event["best"]
-#     # exclude = summarization_event["uids"]
-#     best_summary_context = "### SUMMARY CONTEXT:\n" + best_summary
-
-#     for k in range(self.config.neuron.num_followup_steps):
-#         # Get a followup question, given the summarized context.
-#         qg_task = create_qg_task(base_text=best_summary_context, index=k)
-
-#         qg_event = await run_step(
-#             self,
-#             task=qg_task,
-#             k=self.config.neuron.followup_sample_size,
-#             timeout=self.config.neuron.followup_timeout,
-#             # exclude=exclude,
-#         )
-#         # exclude += qg_event["uids"]
-
-#         # Adds the best question to the prompt context.
-#         best_question = qg_event["best"]
-#         best_question_prompt = (
-#             best_summary_context + f"\n### QUESTION {k}:\n{best_question}"
-#         )
-
-#         qa_task = create_qa_task(best_question_prompt, index=k)
-
-#         qa_event = await run_step(
-#             self,
-#             task=qa_task,
-#             k=self.config.neuron.answer_sample_size,
-#             timeout=self.config.neuron.answer_timeout,
-#             # exclude=exclude,
-#         )
-
-#         # exclude += qa_event["uids"]
 
 
 async def forward(self):
