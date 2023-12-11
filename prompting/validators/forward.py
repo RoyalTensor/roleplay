@@ -137,7 +137,9 @@ def restrict_format_followup_responses(
                 response.completion = " ".join(completion.split(" ")[-max_words:])
 
 
-def compute_rewards(self, task: RoleplayTask, responses: List[bt.Synapse]):
+def compute_rewards(
+    self, task: RoleplayTask, responses: List[bt.Synapse], task_name: str, event: dict
+):
     # Compute the rewards for the responses given the prompt.
     rewards: torch.FloatTensor = torch.zeros(len(responses), dtype=torch.float32).to(
         self.device
@@ -223,7 +225,7 @@ async def run_step(
 
     restrict_format_followup_responses(self, responses, task_name)
 
-    rewards = compute_rewards(self, task, responses)
+    rewards = compute_rewards(self, task, responses, task_name, event)
 
     # Train the gating model based on the predicted scores and the actual rewards.
     gating_scores: torch.FloatTensor = self.gating_model(prompt).to(self.device)
