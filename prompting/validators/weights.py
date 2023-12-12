@@ -29,12 +29,7 @@ def should_set_weights(self) -> bool:
     # Check if enough epoch blocks have elapsed since the last epoch.
     if self.config.neuron.disable_set_weights:
         return False
-
-    return (
-        ttl_get_block(self) % self.config.neuron.epoch_length
-        < self.prev_block % self.config.neuron.epoch_length
-    )
-
+    return True
 
 def set_weights(self):
     # Calculate the average reward for each uid across non-zero values.
@@ -59,7 +54,7 @@ def set_weights(self):
     bt.logging.trace("processed_weight_uids", processed_weight_uids)
 
     # Set the weights on chain via our subtensor connection.
-    self.subtensor.set_weights(
+    result = self.subtensor.set_weights(
         wallet=self.wallet,
         netuid=self.config.netuid,
         uids=processed_weight_uids,
@@ -67,3 +62,8 @@ def set_weights(self):
         wait_for_finalization=False,
         version_key=validators.__spec_version__,
     )
+    
+    if result:
+        bt.logging.success('Successfully set weights.')
+    else: 
+        bt.logging.error('Failed to set weights.')

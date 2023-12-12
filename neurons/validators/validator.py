@@ -21,6 +21,7 @@ import torch
 import asyncio
 import bittensor as bt
 from traceback import print_exception
+import pdb
 
 import prompting
 
@@ -32,7 +33,6 @@ from prompting.validators.mock import MockDendrite, MockRewardModel, MockGatingM
 from prompting.validators.config import add_args, check_config, config
 from prompting.validators.forward import forward
 from prompting.validators.utils import (
-    should_checkpoint,
     checkpoint,
     should_reinit_wandb,
     reinit_wandb,
@@ -291,6 +291,12 @@ class neuron:
         self.prev_block = ttl_get_block(self)
         self.step = 0
 
+    def should_update(self):
+        cur_block = ttl_get_block(self)
+        return (
+            cur_block - self.prev_block > self.config.neuron.epoch_length
+        )
+
     def run(self):
         bt.logging.info("run()")
         load_state(self)
@@ -314,20 +320,22 @@ class neuron:
 
                 self.loop.run_until_complete(run_forward())
 
-                # Resync the network state
-                if should_checkpoint(self):
+                
+                if self.should_update():
+                    # Resync the network state
                     checkpoint(self)
-
-                # Set the weights on chain.
-                if should_set_weights(self):
-                    set_weights(self)
-                    save_state(self)
+                    if should_set_weights(self):
+                        # Set the weights on chain.
+                        set_weights(self)
+                        save_state(self)
+                        
+                    self.prev_block = ttl_get_block(self)
+                    
+                    
 
                 # Rollover wandb to a new run.
                 if should_reinit_wandb(self):
                     reinit_wandb(self)
-
-                self.prev_block = ttl_get_block(self)
                 self.step += 1
         except Exception as err:
             bt.logging.error("Error in training loop", str(err))
