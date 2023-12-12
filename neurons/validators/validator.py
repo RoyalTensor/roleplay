@@ -162,8 +162,8 @@ class neuron:
 
             self.masking_functions = [
                 self.blacklist,
-                relevance_model,
-                self.diversity_model,
+                # relevance_model, 
+                # self.diversity_model,
                 nsfw_model,
             ]
 
