@@ -1,111 +1,92 @@
 
 <div align="center">
 
-# **Bittensor Text-Prompting** <!-- omit in toc -->
+# **Bittensor: Roleplay Subnet #32** <!-- omit in toc -->
 [![Discord Chat](https://img.shields.io/discord/308323056592486420.svg)](https://discord.gg/bittensor)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) 
 
 ---
 
-### The Incentivized Internet <!-- omit in toc -->
+### Frontier of Gaming and Roleplay <!-- omit in toc -->
 
-[Discord](https://discord.gg/bittensor) • [Network](https://taostats.io/) • [Research](https://bittensor.com/whitepaper)
+[Bittensor Discord](https://discord.gg/bittensor) • [Taostats Explorer](https://taostats.io/) • [Bittensor Whitepaper](https://bittensor.com/whitepaper)
 
 </div>
 
 ---
 
-This template contains all the necessary files and functions to run Bittensor's Text-Prompting Subnet. You can try running miners on netuid 8 in Bittensor's test network.
+This place is all about making roleplaying in games way cooler. Our subnet is specifically tailored for roleplaying applications, leveraging the power of large language models to create immersive, character-driven experiences. This technology holds enormous potential for integration into video games, offering a new dimension to GameFi. We think this could really change the way we play games.
+# What's This All About?
+The Bittensor network introduces specialized subnets, each with its unique value proposition. The Roleplay Subnet is a niche within this ecosystem, focusing on creating interactive, AI-driven characters for various applications, including gaming and virtual interactions. Our technology enables dynamic, responsive character interactions, enhancing the roleplay experience in gaming environments.
 
-# Introduction
-The Bittensor blockchain hosts multiple self-contained incentive mechanisms 'subnets'. Subnets are playing fields through which miners (those producing value) and validators (those producing consensus) determine together the proper distribution of TAO for the purpose of incentivizing the creation of value, i.e. generating digital commodities, such as intelligence, or data. Each consists of a wire protocol through which miners and validators interact and their method of interacting with Bittensor's chain consensus engine [Yuma Consensus](https://bittensor.com/documentation/validating/yuma-consensus) which is designed to drive these actors into agreement about who is creating value.
 
-This repository is a subnet for text prompting with large language models (LLM). Inside, you will find miners and validators designed by the OpenTensor Foundation team to valdiate and serve language models. The current validator implementation queries the network for responses while servers responds to requests with their best completions. These completions are judged and ranked by the validators and passed to the chain. 
-
-</div>
+In this project, we've got everything you need to get these AI characters up and running. It's not just us working on it, either. Everyone who mines and validates in our subnet helps make these characters seem even more real. We're all about creating a cool experience that everyone can enjoy.</div>
 
 ---
 
 # Installation
 This repository requires python3.8 or higher. To install, simply clone this repository and install the requirements.
 ```bash
-git clone https://github.com/opentensor/text-prompting.git
-cd text-prompting
+git clone https://github.com/RoyalTensor/roleplay.git
+cd roleplay
 python -m pip install -r requirements.txt
 python -m pip install -e .
 ```
 
-If you are running a specific server, you might need install server-specific requirements.
+If you are running a specific miner or validator, you might need install its specific requirements. For example, the Mistral Open-Orca miner may require you to run:
 
 ```bash
-cd neurons/miners/bittensorLM
+cd neurons/miners/mistral7b-openorca
 python -m pip install -r requirements.txt
 ```
 
-</div>
+
 
 ---
 
-Prior to running a miner or validator, you must [create a wallet](https://github.com/opentensor/docs/blob/main/reference/btcli.md) and [register the wallet to a netuid](https://github.com/opentensor/docs/blob/main/subnetworks/registration.md). Once you have done so, you can run the miner and validator with the following commands.
-```bash
-# To run the miner
-python -m neurons/miners/bittensorLM/miner.py 
-    --netuid 8  
-    --subtensor.network test 
-    --wallet.name <your miner wallet> # Must be created using the bittensor-cli
-    --wallet.hotkey <your validator hotkey> # Must be created using the bittensor-cli
-    --logging.debug # Run in debug mode, alternatively --logging.trace for trace mode
+Prior to running a miner or validator, you must [create a wallet](https://github.com/opentensor/docs/blob/main/reference/btcli.md) and [register the wallet to netuid 32](https://github.com/opentensor/docs/blob/main/subnetworks/registration.md). Once you have done so, you can run the miner and validator with the following commands from the project root.
+``` bash
+# Mistral Open Orca miner (Requires A6000 or better)
+python -m neurons.miners.vicuna.miner --netuid 32 --wallet.name <wallet name>  --wallet.hotkey <wallet hotkey> --logging.debug --logging.trace --axon.port <open port>
 
-# To run the validator
-python -m neurons/validators/validator.py
-    --netuid 8
-    --subtensor.network test 
-    --wallet.name <your validator wallet>  # Must be created using the bittensor-cli
-    --wallet.hotkey <your validator hotkey> # Must be created using the bittensor-cli
-    --logging.debug # Run in debug mode, alternatively --logging.trace for trace mode
+# If you have PM2, we recommend this instead:
+pm2 start neurons/miners/mistral7b-openorca/miner.py --name roleplayMiner --interpreter python3 --max-restarts 100 -- --netuid 32 --wallet.name <wallet name>  --wallet.hotkey <wallet hotkey> --logging.debug --logging.trace --axon.port <open port>
 ```
 
-</div>
+``` bash
+# Open AI Miner (API mining, requires OpenAI account)
+python -m neurons.miners.openai.miner --openai.api_key "openai key" --netuid 32 --wallet.name <miner wallet>  --wallet.hotkey <miner hotkey> --logging.debug --logging.trace --axon.port <open port>
+
+# If you have PM2, we recommend this instead:
+pm2 start neurons/miners/openai/miner.py --name openaiMiner --interpreter python3 --max-restarts 100 -- --netuid 32  --wallet.name <miner wallet>  --wallet.hotkey <miner hotkey> --logging.debug --logging.trace --axon.port <an open port> --openai.api_key "sk-your API key"
+```
+
+``` bash
+# OpenRouter Miner (API mining, requires Openrouter account)
+python -m neurons.miners.openrouter.miner --openrouter.api_key "openrouter key" --netuid 32 --wallet.name <wallet name>  --wallet.hotkey <hotkey name> --logging.debug --logging.trace --axon.port <open port>
+
+# If you have PM2, we recommend this instead:
+pm2 start neurons/miners/openrouter/miner.py --name openrouterMiner --interpreter python3 --max-restarts 100 -- --netuid 32  --wallet.name <wallet name>  --wallet.hotkey <hotkey name> --logging.debug --logging.trace --axon.port <open port> --openrouter.api_key "openrouter key"
+```
+
+``` bash
+# To run the validator
+python -m neurons.validators.validator --netuid 32 --wallet.name <wallet name>  --wallet.hotkey <wallet hotkey> --logging.debug --logging.trace --axon.port <open port>
+
+# If you have PM2, we recommend this instead:
+pm2 start neurons/validators/validator.py  --name roleplayValidator --interpreter python3 --max-restarts 100 -- --netuid 32 --wallet.name <wallet name>  --wallet.hotkey <wallet hotkey> --logging.debug --logging.trace --axon.port <open port>
+```
+
 
 ---
 
+## Potential and Future Developments
 
-# Running
-
-These validators are designed to run and update themselves automatically. To run a validator, follow these steps:
-
-1. Install this repository, you can do so by following the steps outlined in [the installation section](#installation).
-2. Install [Weights and Biases](https://docs.wandb.ai/quickstart) and run `wandb login` within this repository. This will initialize Weights and Biases, enabling you to view KPIs and Metrics on your validator. (Strongly recommended to help the network improve from data sharing)
-3. Install [PM2](https://pm2.io/docs/runtime/guide/installation/) and the [`jq` package](https://jqlang.github.io/jq/) on your system.
-   **On Linux**:
-   ```bash
-   sudo apt update && sudo apt install jq && sudo apt install npm && sudo npm install pm2 -g && pm2 update
-   ``` 
-   **On Mac OS**
-   ```bash
-   brew update && brew install jq && brew install npm && sudo npm install pm2 -g && pm2 update
-   ```
-4. Run the `run.sh` script which will handle running your validator and pulling the latest updates as they are issued. 
-   ```bash
-   pm2 start run.sh --name text_prompt_validators_autoupdate -- --wallet.name <your-wallet-name> --wallet.hotkey <your-wallet-hot-key>
-   ```
-
-This will run **two** PM2 process: one for the validator which is called `text_prompt_validators_main_process` by default (you can change this in `run.sh`), and one for the run.sh script (in step 4, we named it `text_prompt_validators_autoupdate`). The script will check for updates every 30 minutes, if there is an update then it will pull it, install it, restart `text_prompt_validators_main_process` and then restart itself.
+Our Roleplay Subnet is more than just tech; it's a new way to play and tell stories in games. We're really excited to see how it can fit into different games and help grow GameFi as well as the broad gaming industry. This is a project for everyone who loves gaming, and we can't wait to see what we can all create together. Special thanks to Opentensor team and SN1 text-prompting team for making this all possible.
 
 
-# Real-time monitoring with wandb integration
-By default, the text prompting validator sends data to wandb, allowing users to monitor running validators and access key metrics in real time, such as:
-- Gating model loss
-- Hardware usage
-- Forward pass time
-- Block duration
+---
 
-All the data sent to wandb is publicly available to the community at the following [link](https://wandb.ai/opentensor-dev/openvalidators).
-
-You don't need to have a wandb account to access the data or to generate a new run,
-but bear in mind that
-[data generated by anonymous users will be deleted after 7 days](https://docs.wandb.ai/guides/app/features/anon#:~:text=If%20there's%20no%20account%2C%20we,be%20available%20for%207%20days)
-as default wandb policy.
 
 ## License
 This repository is licensed under the MIT License.

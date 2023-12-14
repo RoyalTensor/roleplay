@@ -1,4 +1,0 @@
-transformers>=4.28.0, <=4.31.0
-accelerate
-py-cpuinfo
-deepspeed
