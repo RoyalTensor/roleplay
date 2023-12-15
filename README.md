@@ -44,7 +44,7 @@ python -m pip install -r requirements.txt
 
 ---
 
-Prior to running a miner or validator, you must [create a wallet](https://github.com/opentensor/docs/blob/main/reference/btcli.md) and [register the wallet to netuid 32](https://github.com/opentensor/docs/blob/main/subnetworks/registration.md). Once you have done so, you can run the miner and validator with the following commands from the project root.
+Prior to running a miner or validator, you must create a wallet and register the wallet to netuid 32. Once you have done so, you can run the miner and validator with the following commands from the project root.
 ``` bash
 # Mistral Open Orca miner (Requires A6000 or better)
 python -m neurons.miners.vicuna.miner --netuid 32 --wallet.name <wallet name>  --wallet.hotkey <wallet hotkey> --logging.debug --logging.trace --axon.port <open port>
