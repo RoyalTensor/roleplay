@@ -46,7 +46,7 @@ python -m pip install -r requirements.txt
 
 Prior to running a miner or validator, you must create a wallet and register the wallet to netuid 32. Once you have done so, you can run the miner and validator with the following commands from the project root.
 ``` bash
-# Mistral Open Orca miner (Requires A6000 or better)
+# Mistral Open Orca miner (Requires 3090 or better)
 python -m neurons.miners.vicuna.miner --netuid 32 --wallet.name <wallet name>  --wallet.hotkey <wallet hotkey> --logging.debug --logging.trace --axon.port <open port>
 
 # If you have PM2, we recommend this instead:
@@ -70,7 +70,7 @@ pm2 start neurons/miners/openrouter/miner.py --name openrouterMiner --interprete
 ```
 
 ``` bash
-# To run the validator
+# To run the validator - A6000 or better required. 48GB+ VRAM.
 python -m neurons.validators.validator --netuid 32 --wallet.name <wallet name>  --wallet.hotkey <wallet hotkey> --logging.debug --logging.trace --axon.port <open port>
 
 # If you have PM2, we recommend this instead:
