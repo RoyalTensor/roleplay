@@ -34,21 +34,27 @@ class Message(pydantic.BaseModel):
 
 
 class PromptingMixin(pydantic.BaseModel):
-    """
 
-    It specifies three fields - `roles`, `messages` and `completion` - that define the state of the Prompting object.
-    The `roles` and `messages` are read-only fields defined during object initialization, and `completion` is a mutable
-    field that can be updated as the prompting scenario progresses.
+    """
+    A Pydantic model representing a prompting scenario involving interactions between AI characters and human users.
+
+    This model includes details about the characters, users, and the interaction criteria, as well as the messages exchanged
+    and the completion status of the prompt. The fields related to character and user information, as well as the criteria
+    and messages, are immutable once set during object initialization. In contrast, the `completion` field is mutable and
+    can be updated as the scenario progresses.
 
     The Config inner class specifies that assignment validation should occur on this class (validate_assignment = True),
     meaning value assignments to the instance fields are checked against their defined types for correctness.
 
     Attributes:
-        roles (List[str]): A list of roles in the prompting scenario. This field is both mandatory and immutable.
-        messages (List[str]): A list of messages in the prompting scenario. This field is both mandatory and immutable.
-        completion (str): A string that captures completion of the prompt. This field is mutable.
-        required_hash_fields List[str]: A list of fields that are required for the hash.
-
+        character_info (str): Information about the AI character who is responding. Immutable.
+        character_name (str): Name of the AI responding character. Immutable.
+        user_names (List[str]): Names of the human participants. Immutable.
+        char_names (List[str]): Names of all of the AI characters. Immutable.
+        criteria (List[str]): Criteria for the AI response. Immutable.
+        messages (List[Message]): List of messages containing character name and content. Immutable.
+        completion (str): Mutable string that captures the completion status of the prompt.
+        required_hash_fields (List[str]): A list of fields that are required for the hash. Immutable.
     """
 
     class Config:
@@ -117,39 +123,41 @@ class Prompting(PromptingMixin, bt.Synapse):
     Methods:
         deserialize() -> "Prompting": Returns the instance of the current object.
 
-
-    The `Prompting` class also overrides the `deserialize` method, returning the
-    instance itself when this method is invoked. Additionally, it provides a `Config`
-    inner class that enforces the validation of assignments (`validate_assignment = True`).
-
     Here is an example of how the `Prompting` class can be used:
 
+    Example of Usage:
     ```python
-    # Create a Prompting instance
-    prompt = Prompting(roles=["system", "user"], messages=["Hello", "Hi"])
+    # Example Messages
+    messages = [
+        Message(name="Alice", content="How's the weather today?"),
+        Message(name="Bob", content="It's sunny and warm today!")
+    ]
 
-    # Print the roles and messages
-    print("Roles:", prompt.roles)
-    print("Messages:", prompt.messages)
+    # Create a Prompting instance with character info, names, criteria, messages, and completion status
+    prompt = Prompting(
+        character_info="AI Assistant",
+        character_name="Mr.Robot",
+        user_names=["Alice", "Bob"],
+        char_names=["Mr.Robot"],
+        criteria=["You should be polite and friendly."],
+        messages=messages
+    )
+
+    # Print the character info and the first message
+    print("Character Info:", prompt.character_info)
+    print("First Message:", prompt.messages[0].content)
 
     # Update the completion
-    model_prompt =... # Use prompt.roles and prompt.messages to generate a prompt
+    model_prompt =... # Use prompt.messages to generate a prompt
     for your LLM as a single string.
     prompt.completion = model(model_prompt)
 
-    # Print the completion
+    # Print the updated completion status
     print("Completion:", prompt.completion)
     ```
 
-    This will output:
-    ```
-    Roles: ['system', 'user']
-    Messages: ['You are a helpful assistant.', 'Hi, what is the meaning of life?']
-    Completion: "The meaning of life is 42. Deal with it, human."
-    ```
-
-    This example demonstrates how to create an instance of the `Prompting` class, access the
-    `roles` and `messages` fields, and update the `completion` field.
+    This example demonstrates how to create an instance of the `Prompting` class with detailed character information,
+    user names, character names, criteria for the interaction, a list of messages, and a completion text.
     """
 
     def deserialize(self) -> "Prompting":
@@ -175,19 +183,6 @@ class StreamPrompting(PromptingMixin, bt.StreamingSynapse):
     As a developer, when using or extending the `StreamPrompting` class, you should be primarily focused on the structure
     and behavior of the prompts you are working with. The class has been designed to seamlessly handle the streaming,
     decoding, and accumulation of tokens that represent these prompts.
-
-    Attributes:
-    - `roles` (List[str]): A list of roles involved in the prompting scenario. This could represent different entities
-                           or agents involved in the conversation or use-case. They are immutable to ensure consistent
-                           interaction throughout the lifetime of the object.
-
-    - `messages` (List[str]): These represent the actual prompts or messages in the prompting scenario. They are also
-                              immutable to ensure consistent behavior during processing.
-
-    - `completion` (str): Stores the processed result of the streaming tokens. As tokens are streamed, decoded, and
-                          processed, they are accumulated in the completion attribute. This represents the "final"
-                          product or result of the streaming process.
-    - `required_hash_fields` (List[str]): A list of fields that are required for the hash.
 
     Methods:
     - `process_streaming_response`: This method asynchronously processes the incoming streaming response by decoding

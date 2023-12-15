@@ -153,7 +153,6 @@ class OpenAIMiner(Miner):
     def append_criteria(self, message, criteria_strs: List[str]) -> str:
         criteria_str = "\n".join(criteria_strs)
         return message + "\n" + criteria_str
-        
 
     def prompt(self, synapse: Prompting) -> Prompting:
         """
@@ -166,11 +165,8 @@ class OpenAIMiner(Miner):
 
         Args:
             synapse (Prompting):
-                The incoming request object. Must contain:
-                    - `roles`: List of roles for each message, e.g., ["system", "user"].
-                      Describes the origin or type of each message.
-                    - `messages`: List of actual message content corresponding to each role.
-                The combination of roles and messages forms a conversation context for the model.
+                The incoming request object. Must contain the fields from Prompting in protocol.py,
+                The messages forms a conversation context for the model.
 
         Returns:
             Prompting:
@@ -186,7 +182,12 @@ class OpenAIMiner(Miner):
         """
         bittensor.logging.debug(f"synapse: {synapse}")
         messages = [
-            {"role": message.name, "content": self.append_criteria(message.content + synapse.character_info, synapse.criteria)}
+            {
+                "role": message.name,
+                "content": self.append_criteria(
+                    message.content + synapse.character_info, synapse.criteria
+                ),
+            }
             if message.name == "system"
             else {"role": message.name, "content": message.content}
             for message in synapse.messages
